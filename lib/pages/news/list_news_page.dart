@@ -9,8 +9,28 @@ import 'package:forestvpn_test/repositories/news/models/article.dart';
 import 'package:forestvpn_test/theme/styles.dart';
 import 'package:provider/src/provider.dart';
 
-class ListNewsPage extends StatelessWidget {
+class ListNewsPage extends StatefulWidget {
   ListNewsPage({Key? key}) : super(key: key);
+
+  @override
+  State<ListNewsPage> createState() => _ListNewsPageState();
+}
+
+class _ListNewsPageState extends State<ListNewsPage> {
+  final ScrollController _controller = ScrollController();
+  double scrollOffset = 0;
+
+  @override
+  void initState() {
+    _controller.addListener(_scrollListener);
+    super.initState();
+  }
+
+  void _scrollListener() {
+    setState(() {
+      scrollOffset = _controller.offset;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +82,7 @@ class ListNewsPage extends StatelessWidget {
                         child: CircularProgressIndicator(),
                       )
                     : SingleChildScrollView(
+                        controller: _controller,
                         child: Padding(
                           padding: const EdgeInsets.all(28.0),
                           child: Column(
@@ -74,35 +95,72 @@ class ListNewsPage extends StatelessWidget {
                               SizedBox(
                                 height: 20,
                               ),
-                              CarouselSlider(
-                                // options: CarouselOptions(height: 400.0),
-                                options: CarouselOptions(
-                                    autoPlay: false,
-                                    enlargeCenterPage: true,
-                                    viewportFraction: 1.0,
-                                    height: 300
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 500),
+                                transitionBuilder: (Widget child, Animation<double> animation) {
+                                  return ScaleTransition(scale: animation, child: child);
+                                },
+                                child: scrollOffset < 40
+                                    ? CarouselSlider(
+                                  options: CarouselOptions(
+                                      autoPlay: false,
+                                      enlargeCenterPage: true,
+                                      viewportFraction: 1.0,
+                                      height: 300
+                                  ),
+                                  items: state.articles.map((article) {
+                                    return Builder(
+                                      builder: (BuildContext context) {
+                                        print(_controller.offset);
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) =>
+                                                  DetailArticlePage(
+                                                    article: article,
+                                                  )),
+                                            );
+                                          },
+                                          child: ArticleContainer(
+                                              article: article,
+                                              type: 'featured'
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }).toList(),
+                                )
+                                    : CarouselSlider(
+                                  options: CarouselOptions(
+                                      autoPlay: false,
+                                      enlargeCenterPage: true,
+                                      viewportFraction: 1.0,
+                                      height: 110
+                                  ),
+                                  items: state.articles.map((article) {
+                                    return Builder(
+                                      builder: (BuildContext context) {
+                                        print(_controller.offset);
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) =>
+                                                  DetailArticlePage(
+                                                    article: article,
+                                                  )),
+                                            );
+                                          },
+                                          child: ArticleContainer(
+                                              article: article,
+                                              type: 'latest'
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }).toList(),
                                 ),
-                                items: state.articles.map((article) {
-                                  return Builder(
-                                    builder: (BuildContext context) {
-                                      return GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (context) =>
-                                                DetailArticlePage(
-                                                  article: article,
-                                                )),
-                                          );
-                                        },
-                                        child: ArticleContainer(
-                                          article: article,
-                                          type: 'featured',
-                                        ),
-                                      );
-                                    },
-                                  );
-                                }).toList(),
                               ),
                               SizedBox(
                                 height: 20,
@@ -143,5 +201,4 @@ class ListNewsPage extends StatelessWidget {
       ),
     );
   }
-
 }
